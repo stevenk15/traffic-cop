@@ -1,4 +1,4 @@
-var cassandra = require('cassandra-driver');
+var cassandra = require('cassandra-driver'), util = require('util');
 
 /**
  * create the cassandra connection object

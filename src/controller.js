@@ -1,4 +1,6 @@
 var log = require('./logger').log,
+    appName = require('../package.json').name,
+    appVersion = require('../package.json').version,
     cassandraClient = require('./cassandra').cassandraClient,
     redisClient = require('./redis').redisClient,
     util = require('util'),
@@ -28,26 +30,26 @@ function handleGetRequest(request, response, next){
         log.error(msg);
         response.json(new restify.errors.BadRequestError(msg));
         next();
-    }
-    if (!request.params.userId){
+    } else if (!request.params.userId){
         msg = "Missing request.params.userId!";
         log.error(msg);
         response.json(new restify.errors.BadRequestError(msg));
         next();
+    } else {
+
+        var userId = request.params.userId;
+        log.debug("userId: " + userId);
+
+        retrieveUserInfo(userId, function retrieveUserInfoCb(error, data) {
+            if (!error) {
+                response.json(200, data);
+            } else {
+                response.json(error);
+            }
+        });
+
+        next();
     }
-
-    var userId = request.params.userId;
-    log.debug("userId: " + userId);
-
-    retrieveUserInfo(userId, function retrieveUserInfoCb(error, data){
-        if (!error){
-            response.json(200, data);
-        } else {
-            response.json(error);
-        }
-    });
-
-    next();
 }
 
 /**
@@ -67,7 +69,37 @@ function handlePostRequest(request, response, next){
     handleGetRequest(request, response, next);
 }
 
-function handleHealthCheck(request, response, next){}
+function handleHealthCheck(request, response, next){
+
+    var statusCode = 200;
+    var responseData = {
+        "name": appName,
+        "version": appVersion
+    };
+
+    // check Redis
+    if (redisClient.connected){
+        responseData.redis = "Connected";
+    } else {
+        statusCode = 500;
+        responseData.redis = "Not Connected";
+    }
+
+    // check Cassandra
+    cassandraClient.connect(function(error){
+        if (!error){
+            responseData.cassandra = "Connected";
+        } else {
+            statusCode = 500;
+            responseData.cassandra = "Not Connected";
+        }
+        responseData.statusCode = statusCode;
+        response.json(statusCode, responseData);
+    });
+
+    next();
+
+}
 
 /**
  * Once the userId has been parsed out of the respective request method this
@@ -94,11 +126,16 @@ function retrieveUserInfo(userId, callback){
                 var params = [userId];
                 cassandraClient.execute(query, params, {"prepare": true}, function(cError, cResult){
                     if (!cError){
-                        var cVal = cResult.rows[0].platform;
-                        callback(null, cVal);
+                        if (cResult.rows && cResult.rows.length > 0){
+                            log.info(cResult.rows[0]);
+                            var cVal = cResult.rows[0].platform;
+                            callback(null, cVal);
 
-                        // put the userId into Redis
-                        redisClient.set();
+                            // put the userId into Redis
+                            redisClient.set(userId, cVal);
+                        } else {
+                            callback(new restify.errors.NotFoundError("User not found in DB"), null);
+                        }
                     } else {
                         // Cassandra error, return the error
                         callback(new restify.errors.InternalServerError("Cassandra error: " + cError), null);

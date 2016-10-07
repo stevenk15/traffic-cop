@@ -78,7 +78,7 @@ server.post("/svc/v1/traffic-cop", handlePostRequest);
 server.get("/healthcheck", handleHealthCheck);
 
 // Start the server on the given port.
-server.listen(process.env.SERVER_PORT, function startServerCb(){
+server.listen(parseInt(process.env.SERVER_PORT, 10), function startServerCb(){
     // names the process for use in a 'ps' command
     process.title = appName;
 	log.info("Traffic Cop started");

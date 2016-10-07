@@ -12,7 +12,7 @@ var redisClient = redis.createClient({
      * The retry_strategy function defines how to handle certain error
      * situations in Redis.
      */
-    "retry_strategy": function (options) {
+    "retry_strategy": function redisRetryStrategy (options) {
         if (options.error.code === 'ECONNREFUSED') {
             // End reconnecting on a specific error and flush all commands with a individual error
             return new Error('The Redis server refused the connection');
@@ -30,8 +30,12 @@ var redisClient = redis.createClient({
     }
 });
 
+redisClient.on('reconnecting', function redisReconnecting() {
+    debug('Retrying to connect to Redis...');
+});
+
 redisClient.on("error", function redisOnErrorCb(err) {
-    log("Error: " + err);
+    log.error("Redis error: " + err);
 });
 
 module.exports.redisClient = redisClient;

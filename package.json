@@ -1,13 +1,13 @@
 {
   "name": "traffic-cop",
   "version": "0.0.1",
-  "description": "",
+  "description": "Acts as a toggle between an old 'legacy' stack and a new 'microservices' stack based on a userId parameter.",
   "main": "index.js",
   "scripts": {
     "start": "./run.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Steven Schattenberg",
   "license": "ISC",
   "dependencies": {
     "bunyan": "^1.8.1",
@@ -21,6 +21,8 @@
     "grunt-env": "^0.4.4",
     "grunt-mocha-test": "^0.13.2",
     "mocha": "^3.1.0",
-    "should": "^11.1.0"
+    "rewire": "^2.5.2",
+    "should": "^11.1.0",
+    "sinon": "^1.17.6"
   }
 }
