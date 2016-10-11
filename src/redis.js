@@ -12,22 +12,7 @@ var redisClient = redis.createClient({
      * The retry_strategy function defines how to handle certain error
      * situations in Redis.
      */
-    "retry_strategy": function redisRetryStrategy (options) {
-        if (options.error.code === 'ECONNREFUSED') {
-            // End reconnecting on a specific error and flush all commands with a individual error
-            return new Error('The Redis server refused the connection');
-        }
-        if (options.total_retry_time > 1000 * 60) {
-            // End reconnecting after a specific timeout and flush all commands with a individual error
-            return new Error('Retry time exhausted');
-        }
-        if (options.times_connected > 2) {
-            // End reconnecting with built in error
-            return undefined;
-        }
-        // reconnect after
-        return Math.max(options.attempt * 100, 3000);
-    }
+    "retry_strategy": redisRetryStrategy
 });
 
 redisClient.on('reconnecting', function redisReconnecting() {
@@ -38,4 +23,33 @@ redisClient.on("error", function redisOnErrorCb(err) {
     log.error("Redis error: " + err);
 });
 
-module.exports.redisClient = redisClient;
+/**
+ * Function defines how the application should behave when having issues with
+ * the Redis connection.
+ *
+ * @private
+ * @param options
+ * @returns {*}
+ */
+function redisRetryStrategy (options) {
+    if (options.error.code === 'ECONNREFUSED') {
+        // End reconnecting on a specific error and flush all commands with a individual error
+        return new Error('The Redis server refused the connection');
+    }
+    if (options.total_retry_time > 1000 * 60) {
+        // End reconnecting after a specific timeout and flush all commands with a individual error
+        return new Error('Retry time exhausted');
+    }
+    if (options.times_connected > 2) {
+        // End reconnecting with built in error
+        return undefined;
+    }
+    // reconnect after
+    return Math.max(options.attempt * 100, 3000);
+}
+
+function getRedisClient (){
+    return redisClient;
+}
+
+module.exports.getRedisClient = getRedisClient;

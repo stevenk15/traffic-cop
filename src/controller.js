@@ -1,8 +1,8 @@
 var log = require('./logger').log,
     appName = require('../package.json').name,
     appVersion = require('../package.json').version,
-    cassandraClient = require('./cassandra').cassandraClient,
-    redisClient = require('./redis').redisClient,
+    getCassandraClient = require('./cassandra').getCassandraClient,
+    getRedisClient = require('./redis').getRedisClient,
     util = require('util'),
     restify = require('restify');
 
@@ -40,7 +40,10 @@ function handleGetRequest(request, response, next){
         var userId = request.params.userId;
         log.debug("userId: " + userId);
 
-        retrieveUserInfo(userId, function retrieveUserInfoCb(error, data) {
+        var redisClient = getRedisClient();
+        var cassandraClient = getCassandraClient();
+
+        retrieveUserInfo(redisClient, cassandraClient, userId, function retrieveUserInfoCb(error, data) {
             if (!error) {
                 response.json(200, data);
             } else {
@@ -71,6 +74,8 @@ function handlePostRequest(request, response, next){
 
 function handleHealthCheck(request, response, next){
 
+    var redisClient = getRedisClient();
+    var cassandraClient = getCassandraClient();
     var statusCode = 200;
     var responseData = {
         "name": appName,
@@ -112,7 +117,7 @@ function handleHealthCheck(request, response, next){
  * @param callback
  *      The callback to invoke when finished
  */
-function retrieveUserInfo(userId, callback){
+function retrieveUserInfo(redisClient, cassandraClient, userId, callback){
     redisClient.get(userId, function(error, reply){
         if (!error){
             if (reply){

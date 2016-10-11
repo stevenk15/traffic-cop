@@ -25,7 +25,22 @@ module.exports = function(grunt) {
                     // Optionally clear the require cache before running tests (defaults to false)
                     "clearRequireCache": false,
                     // Optionally set to not fail on failed tests (will still fail on other errors)
-                    "noFail": false
+                    "noFail": false,
+                    "require": "coverage/blanket"
+                },
+                "src": ['test/**/*.js']
+            },
+            "html-cov": {
+                "options": {
+                    "reporter": "html-cov",
+                    "quiet": true,
+                    "captureFile": "coverage.html"
+                },
+                "src": ['test/**/*.js']
+            },
+            "travis-cov": {
+                "options": {
+                    "reporter": "travis-cov"
                 },
                 "src": ['test/**/*.js']
             }

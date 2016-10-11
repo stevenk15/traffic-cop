@@ -10,4 +10,8 @@ var cassandraClient = new cassandra.Client({
     "keyspace": "ks1"
 });
 
-module.exports.cassandraClient = cassandraClient;
+function getCassandraClient (){
+    return cassandraClient;
+}
+
+module.exports.getCassandraClient = getCassandraClient;
